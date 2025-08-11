@@ -97,3 +97,7 @@
 ## 许可证
 
 [MIT License](LICENSE)
+
+![Visitors](https://visitor-badge.glitch.me/badge?page_id=CaoYongshengcys.pdf2md2latex
+&left_color=gray&right_color=blue)
+![Stars](https://img.shields.io/github/stars/CaoYongshengcys/pdf2md2latex?color=yellow)
