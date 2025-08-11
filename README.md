@@ -80,31 +80,6 @@
 
 **重要提示**：此版本的转换器**主要专注于文本内容**。它不会自动提取和嵌入 PDF 中的图片。
 
-### 手动插入图片的方法
-
-由于 PDF 中的图片提取和定位非常复杂，本工具采用“手动插入”的策略。流程如下：
-
-1.  **转换 PDF**：使用本工具将 PDF 转换为 Markdown 和 LaTeX。
-2.  **提取图片**：使用其他工具（如 `pdfimages` 命令行工具或 `pdfplumber` 的 `page.images` 属性）从原始 PDF 中提取图片。
-3.  **在 Markdown 中插入图片**：
-    *   将提取的图片文件（如 `figure1.png`）放在与 Markdown 文件相同的目录下。
-    *   在 Markdown 内容中，找到需要插入图片的位置，添加如下语法：
-        ```markdown
-        ![图片描述](figure1.png)
-        ```
-4.  **在 LaTeX 中插入图片**：
-    *   将图片文件放在与 `.tex` 文件相同的目录下。
-    *   在 LaTeX 内容中，找到需要插入图片的位置，添加如下代码：
-        ```latex
-        \begin{figure}[ht]
-            \centering
-            \includegraphics[width=0.8\textwidth]{figure1.png}
-            \caption{图片描述}
-            \label{fig:figure1}
-        \end{figure}
-        ```
-    *   确保 LaTeX 文档的导言区（preamble）包含了 `\usepackage{graphicx}`。
-
 ## 配置
 
 *   **文件大小限制**：默认最大为 16MB，可在 `app.py` 中修改 `app.config['MAX_CONTENT_LENGTH']`。
