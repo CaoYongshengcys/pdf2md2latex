@@ -98,6 +98,4 @@
 
 [MIT License](LICENSE)
 
-![Visitors](https://visitor-badge.glitch.me/badge?page_id=CaoYongshengcys/pdf2md2latex
-&left_color=gray&right_color=blue)
-![Stars](https://img.shields.io/github/stars/CaoYongshengcys/pdf2md2latex?color=yellow)
+[![Star History Chart](https://api.star-history.com/svg?repos=CaoYongshengcys/pdf2md2latex&type=Date)](https://star-history.com/#CaoYongshengcys/pdf2md2latex&Date)
