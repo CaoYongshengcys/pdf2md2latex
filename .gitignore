@@ -42,6 +42,8 @@ venv.bak/
 *.fls
 *.fdb_latexmk
 
+#图片
+*.png
 # PDF文件（可选，如果需要上传PDF则删除此行）
 *.pdf
 
@@ -51,6 +53,7 @@ venv.bak/
 
 # 上传文件夹
 uploads/
+images/
 
 # MinerU输出文件夹
 MinerU__*/
