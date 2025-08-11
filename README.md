@@ -1,8 +1,8 @@
-<img src="./images/1.png" width="300" height="200" alt="示例图片">
 # PDF 转 Markdown 转 LaTeX 服务
 
 一个基于 Flask 的 Web 服务，可将 PDF 文件转换为结构化的 Markdown 文档，并进一步转换为 LaTeX 文件。支持使用大语言模型（LLM）对内容进行优化。
 
+<img src="./images/1.png" width="300" height="200" alt="示例图片"><img src="./images/2.png" width="300" height="200" alt="示例图片2">
 ## 功能特性
 
 *   **PDF 文本提取**：使用 `PyPDF2` 和 `pdfplumber` 两种引擎提取 PDF 文本，提高兼容性。
