@@ -8,3 +8,8 @@ blinker==1.6.2
 requests==2.31.0
 PyPDF2==3.0.1
 pdfplumber==0.9.0
+PyMuPDF==1.22.3
+pypandoc==1.11
+# 可选依赖项 - 用于OCR备用转换
+# pdf2image==1.16.3
+# pytesseract==0.3.10

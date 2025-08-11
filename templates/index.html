@@ -65,6 +65,93 @@
             padding: 10px;
             overflow-x: auto;
         }
+        .log-display {
+            background-color: #1e1e1e;
+            color: #00ff00;
+            font-family: 'Courier New', monospace;
+            border: 1px solid #dee2e6;
+            border-radius: 5px;
+            padding: 15px;
+            margin: 15px 0;
+            max-height: 400px;
+            overflow-y: auto;
+            white-space: pre-wrap;
+            font-size: 12px;
+        }
+        .log-container {
+            display: none;
+            margin: 20px 0;
+        }
+        .log-header {
+            background-color: #343a40;
+            color: white;
+            padding: 10px 15px;
+            border-radius: 5px 5px 0 0;
+            font-weight: bold;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .log-controls {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+        }
+        .log-filter {
+            background-color: #495057;
+            color: white;
+            border: none;
+            padding: 5px 10px;
+            border-radius: 3px;
+            font-size: 12px;
+        }
+        .log-search {
+            background-color: #495057;
+            color: white;
+            border: none;
+            padding: 5px 10px;
+            border-radius: 3px;
+            font-size: 12px;
+            width: 150px;
+        }
+        .log-search::placeholder {
+            color: #adb5bd;
+        }
+        .log-entry {
+            margin: 2px 0;
+            padding: 2px 0;
+            border-bottom: 1px solid #343a40;
+        }
+        .log-timestamp {
+            color: #6c757d;
+            margin-right: 8px;
+        }
+        .log-level-info {
+            color: #17a2b8;
+        }
+        .log-level-success {
+            color: #28a745;
+        }
+        .log-level-warning {
+            color: #ffc107;
+        }
+        .log-level-error {
+            color: #dc3545;
+        }
+        .log-level-debug {
+            color: #6f42c1;
+        }
+        .log-stats {
+            background-color: #f8f9fa;
+            border: 1px solid #dee2e6;
+            border-top: none;
+            border-radius: 0 0 5px 5px;
+            padding: 10px 15px;
+            font-size: 12px;
+            color: #6c757d;
+            display: flex;
+            justify-content: space-between;
+        }
     </style>
 </head>
 <body>
@@ -72,7 +159,7 @@
         <div class="row">
             <div class="col-lg-12">
                 <h1 class="text-center mb-4">PDF转Markdown转LaTeX工具</h1>
-                <p class="text-center text-muted">使用MinerU将PDF文件转换为Markdown，然后转换为LaTeX格式</p>
+                <p class="text-center text-muted">将PDF文件转换为Markdown，然后转换为LaTeX格式</p>
             </div>
         </div>
 
@@ -107,6 +194,35 @@
         <!-- 提示信息 -->
         <div class="alert alert-danger" id="errorAlert" role="alert"></div>
         <div class="alert alert-success" id="successAlert" role="alert"></div>
+
+        <!-- 日志显示区域 -->
+        <div class="log-container" id="logContainer">
+            <div class="log-header">
+                <span>转换日志</span>
+                <div class="log-controls">
+                    <select class="log-filter" id="logFilter" onchange="filterLogs()">
+                        <option value="all">全部</option>
+                        <option value="info">信息</option>
+                        <option value="success">成功</option>
+                        <option value="warning">警告</option>
+                        <option value="error">错误</option>
+                        <option value="debug">调试</option>
+                    </select>
+                    <input type="text" class="log-search" id="logSearch" placeholder="搜索日志..." oninput="searchLogs()">
+                    <button type="button" class="btn btn-sm btn-outline-light" onclick="clearLogs()">清空</button>
+                    <button type="button" class="btn btn-sm btn-outline-light" onclick="exportLogs()">导出</button>
+                    <button type="button" class="btn btn-sm btn-outline-light" onclick="toggleAutoRefresh()" id="autoRefreshBtn">自动刷新: 开</button>
+                    <button type="button" class="btn-close btn-close-white" onclick="closeLogContainer()"></button>
+                </div>
+            </div>
+            <div class="log-body">
+                <div class="log-display" id="logDisplay"></div>
+            </div>
+            <div class="log-stats" id="logStats">
+                <span>总日志数: <span id="totalLogs">0</span></span>
+                <span>信息: <span id="infoLogs">0</span> | 成功: <span id="successLogs">0</span> | 警告: <span id="warningLogs">0</span> | 错误: <span id="errorLogs">0</span> | 调试: <span id="debugLogs">0</span></span>
+            </div>
+        </div>
 
         <!-- 内容显示区域 -->
         <div class="row" id="contentArea" style="display: none;">
@@ -216,6 +332,9 @@
         let currentFilename = '';
         let currentMdContent = '';
         let currentLatexContent = '';
+        let logEntries = [];
+        let autoRefreshInterval = null;
+        let isAutoRefreshEnabled = true;
 
         // 文件上传处理
         const uploadArea = document.getElementById('uploadArea');
@@ -308,7 +427,11 @@
 
             showLoading(true);
             hideAlerts();
+            showLogContainer();
+            clearLogDisplay();
+            addLogMessage('开始上传文件: ' + file.name);
 
+            // 使用普通的fetch请求处理文件上传
             fetch('/upload_pdf', {
                 method: 'POST',
                 body: formData
@@ -324,13 +447,16 @@
                     contentArea.style.display = 'none';
                     convertButton.style.display = 'block';
                     optimizationOptions.style.display = 'block';
+                    addLogMessage('PDF转换完成，已生成Markdown内容', 'success');
                 } else {
                     showError(data.error || '转换失败');
+                    addLogMessage('转换失败: ' + (data.error || '未知错误'), 'error');
                 }
             })
             .catch(error => {
                 showLoading(false);
                 showError('上传失败：' + error.message);
+                addLogMessage('上传失败: ' + error.message, 'error');
             });
         }
 
@@ -563,6 +689,179 @@
                 "'": '&#039;'
             };
             return text.replace(/[&<>"']/g, function(m) { return map[m]; });
+        }
+        
+        function showLogContainer() {
+            document.getElementById('logContainer').style.display = 'block';
+            if (isAutoRefreshEnabled && !autoRefreshInterval) {
+                startAutoRefresh();
+            }
+        }
+        
+        function closeLogContainer() {
+            document.getElementById('logContainer').style.display = 'none';
+            if (autoRefreshInterval) {
+                clearInterval(autoRefreshInterval);
+                autoRefreshInterval = null;
+            }
+        }
+        
+        function clearLogDisplay() {
+            logEntries = [];
+            updateLogDisplay();
+        }
+        
+        function clearLogs() {
+            if (confirm('确定要清空所有日志吗？')) {
+                clearLogDisplay();
+                addLogMessage('日志已清空', 'info');
+            }
+        }
+        
+        function exportLogs() {
+            if (logEntries.length === 0) {
+                alert('没有日志可导出');
+                return;
+            }
+            
+            const logText = logEntries.map(entry => 
+                `[${entry.timestamp}] [${entry.level.toUpperCase()}] ${entry.message}`
+            ).join('\n');
+            
+            const blob = new Blob([logText], { type: 'text/plain' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `conversion_logs_${new Date().toISOString().slice(0, 19).replace(/:/g, '-')}.txt`;
+            a.click();
+            URL.revokeObjectURL(url);
+        }
+        
+        function toggleAutoRefresh() {
+            isAutoRefreshEnabled = !isAutoRefreshEnabled;
+            const btn = document.getElementById('autoRefreshBtn');
+            
+            if (isAutoRefreshEnabled) {
+                btn.textContent = '自动刷新: 开';
+                btn.className = 'btn btn-sm btn-outline-light';
+                startAutoRefresh();
+            } else {
+                btn.textContent = '自动刷新: 关';
+                btn.className = 'btn btn-sm btn-outline-secondary';
+                if (autoRefreshInterval) {
+                    clearInterval(autoRefreshInterval);
+                    autoRefreshInterval = null;
+                }
+            }
+        }
+        
+        function startAutoRefresh() {
+            if (autoRefreshInterval) {
+                clearInterval(autoRefreshInterval);
+            }
+            
+            autoRefreshInterval = setInterval(() => {
+                fetch('/get_latest_logs')
+                .then(response => response.json())
+                .then(data => {
+                    if (data.logs && data.logs.length > 0) {
+                        data.logs.forEach(log => {
+                            const existingEntry = logEntries.find(entry => 
+                                entry.timestamp === log.timestamp && entry.message === log.message
+                            );
+                            if (!existingEntry) {
+                                addLogEntry(log.timestamp, log.message, log.level || 'info');
+                            }
+                        });
+                    }
+                })
+                .catch(error => {
+                    console.error('获取最新日志失败:', error);
+                });
+            }, 2000);
+        }
+        
+        function addLogMessage(message, level = 'info') {
+            const timestamp = new Date().toLocaleTimeString();
+            addLogEntry(timestamp, message, level);
+        }
+        
+        function addLogEntry(timestamp, message, level = 'info') {
+            logEntries.push({
+                timestamp: timestamp,
+                message: message,
+                level: level
+            });
+            
+            // 限制日志数量，防止内存溢出
+            if (logEntries.length > 1000) {
+                logEntries = logEntries.slice(-500);
+            }
+            
+            updateLogDisplay();
+        }
+        
+        function updateLogDisplay() {
+            const logDisplay = document.getElementById('logDisplay');
+            const filter = document.getElementById('logFilter').value;
+            const searchTerm = document.getElementById('logSearch').value.toLowerCase();
+            
+            let filteredEntries = logEntries;
+            
+            // 应用级别过滤
+            if (filter !== 'all') {
+                filteredEntries = filteredEntries.filter(entry => entry.level === filter);
+            }
+            
+            // 应用搜索过滤
+            if (searchTerm) {
+                filteredEntries = filteredEntries.filter(entry => 
+                    entry.message.toLowerCase().includes(searchTerm) ||
+                    entry.timestamp.toLowerCase().includes(searchTerm)
+                );
+            }
+            
+            // 生成HTML
+            logDisplay.innerHTML = filteredEntries.map(entry => {
+                const levelClass = `log-level-${entry.level}`;
+                return `<div class="log-entry">
+                    <span class="log-timestamp">[${entry.timestamp}]</span>
+                    <span class="${levelClass}">[${entry.level.toUpperCase()}]</span>
+                    <span>${escapeHtml(entry.message)}</span>
+                </div>`;
+            }).join('');
+            
+            // 滚动到底部
+            logDisplay.scrollTop = logDisplay.scrollHeight;
+            
+            // 更新统计信息
+            updateLogStats();
+        }
+        
+        function updateLogStats() {
+            const stats = {
+                total: logEntries.length,
+                info: logEntries.filter(e => e.level === 'info').length,
+                success: logEntries.filter(e => e.level === 'success').length,
+                warning: logEntries.filter(e => e.level === 'warning').length,
+                error: logEntries.filter(e => e.level === 'error').length,
+                debug: logEntries.filter(e => e.level === 'debug').length
+            };
+            
+            document.getElementById('totalLogs').textContent = stats.total;
+            document.getElementById('infoLogs').textContent = stats.info;
+            document.getElementById('successLogs').textContent = stats.success;
+            document.getElementById('warningLogs').textContent = stats.warning;
+            document.getElementById('errorLogs').textContent = stats.error;
+            document.getElementById('debugLogs').textContent = stats.debug;
+        }
+        
+        function filterLogs() {
+            updateLogDisplay();
+        }
+        
+        function searchLogs() {
+            updateLogDisplay();
         }
     </script>
 </body>
