@@ -7,7 +7,7 @@ from pathlib import Path
 # --- API配置 ---
 try:
     from openai import OpenAI
-    QWEN_API_KEY = os.getenv('DASHSCOPE_API_KEY', "sk-341bf65fcfd4478e9c06058da2c91a24")
+    QWEN_API_KEY = os.getenv('DASHSCOPE_API_KEY', "sk-******")
     client = OpenAI(
         api_key=QWEN_API_KEY,
         base_url="https://dashscope.aliyuncs.com/compatible-mode/v1"
